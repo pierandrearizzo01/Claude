@@ -1,6 +1,7 @@
 #!/bin/bash
 # Installs Ghidra 12.1.4 (REA's verified version) and a JDK 21 so the REA MCP
-# server can use Ghidra for native-binary analysis in cloud sessions.
+# server can use Ghidra for native-binary analysis in cloud sessions, and the
+# Parola app's npm dependencies.
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -38,6 +39,11 @@ if [ ! -f "${GHIDRA_INSTALL_DIR}/Ghidra/application.properties" ]; then
   find "${tmp}/x" -type f \( -name '*.sh' -o -name 'ghidraRun' -o -name 'decompile' -o -name 'sleigh' -o -name 'analyzeHeadless' -o -name 'launch.sh' \) -exec chmod +x {} +
   rm -rf "${GHIDRA_INSTALL_DIR}"
   mv "${tmp}/x/ghidra_${GHIDRA_VERSION}_PUBLIC" "${GHIDRA_INSTALL_DIR}"
+fi
+
+# Parola web app dependencies (npm install reuses the cached container state).
+if [ -f "${CLAUDE_PROJECT_DIR:-.}/parola/package.json" ]; then
+  (cd "${CLAUDE_PROJECT_DIR:-.}/parola" && npm install --no-audit --no-fund >&2)
 fi
 
 # Expose the paths to Bash commands in this session (the MCP server gets them
